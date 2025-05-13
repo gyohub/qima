@@ -1,19 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { Table } from 'antd';
+import { Table, Button, Modal, Form, Input, InputNumber, Switch, Select, Popconfirm, message } from 'antd';
 import axios from 'axios';
 
+const { Option } = Select;
+
 interface ProductDTO {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   price: number;
   available: boolean;
-  categoryPath: string;
+  categoryPath?: string;
+  categoryId?: number;
+}
+
+export interface CategoryDTO {
+  id: number;
+  name: string;
+  parent?: CategoryDTO | null;
 }
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductDTO | null>(null);
+  const [form] = Form.useForm();
+  const [categories, setCategories] = useState<CategoryDTO[]>([]);
+
+  useEffect(() => {
+    axios.get<CategoryDTO[]>('/api/categories').then((res) => {
+      setCategories(res.data);
+    });
+  }, []);
 
   useEffect(() => {
     fetchProducts();
@@ -31,6 +50,39 @@ const Products: React.FC = () => {
       setLoading(false);
     }
   };
+
+const handleFormSubmit = async (values: ProductDTO) => {
+  try {
+    const payload = {
+      ...values,
+      category: { id: values.categoryId },
+    };
+    delete (payload as any).categoryId;
+
+    if (editingProduct?.id) {
+      payload.id = editingProduct.id;
+      await axios.put(`/api/products/${editingProduct.id}`, payload);
+    } else {
+      await axios.post('/api/products', payload);
+    }
+
+    message.success('Saved!');
+    setModalVisible(false);
+    fetchProducts();
+  } catch (err) {
+    message.error('Failed to save product');
+  }
+};
+
+const handleDelete = async (id: number) => {
+  try {
+    await axios.delete(`/api/products/${id}`);
+    message.success('Product deleted');
+    fetchProducts();
+  } catch {
+    message.error('Failed to delete');
+  }
+};
 
   const columns = [
     {
@@ -61,13 +113,48 @@ const Products: React.FC = () => {
       title: 'Category',
       dataIndex: 'categoryPath',
       key: 'categoryPath',
-      sorter: (a: ProductDTO, b: ProductDTO) => a.categoryPath.localeCompare(b.categoryPath),
+      sorter: (a: ProductDTO, b: ProductDTO) =>
+        (a.categoryPath ?? '').localeCompare(b.categoryPath ?? ''),
     },
+  {
+    title: 'Actions',
+    key: 'actions',
+    render: (_: any, record: ProductDTO) => (
+      <>
+        <Button
+          size="small"
+          onClick={() => {
+            const productWithCategoryId = {
+              ...record,
+              categoryId: (record as any).categoryId,
+            };
+
+            setEditingProduct(productWithCategoryId);
+            form.setFieldsValue(productWithCategoryId);
+            setModalVisible(true);
+          }}
+          style={{ marginRight: 8 }}
+        >
+          Edit
+        </Button>
+        <Popconfirm
+          title="Confirm delete?"
+          onConfirm={() => handleDelete(record.id!)}
+        >
+          <Button size="small" danger>Delete</Button>
+        </Popconfirm>
+      </>
+    ),
+  }
   ];
 
   return (
+    <>
     <div>
       <h2>Products</h2>
+      <Button type="primary" onClick={() => { setEditingProduct(null); setModalVisible(true); }}>
+        Add Product
+      </Button>
       {Array.isArray(products) && products.length > 0 ? (
         <Table
           rowKey="id"
@@ -82,6 +169,35 @@ const Products: React.FC = () => {
         <p>No products found.</p>
       )}
     </div>
+    <Modal
+      open={modalVisible}
+      title={editingProduct ? 'Edit Product' : 'Add Product'}
+      onCancel={() => setModalVisible(false)}
+      onOk={() => form.submit()}
+    >
+      <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
+        <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="description" label="Description">
+          <Input />
+        </Form.Item>
+        <Form.Item name="price" label="Price" rules={[{ required: true }]}>
+          <InputNumber min={0} style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name="available" label="Available" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+        <Form.Item name="categoryId" label="Category" rules={[{ required: true }]}>
+          <Select>
+            {categories.map(cat => (
+              <Option key={cat.id} value={cat.id}>{cat.name}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+      </Form>
+    </Modal>
+    </>
   );
 };
 

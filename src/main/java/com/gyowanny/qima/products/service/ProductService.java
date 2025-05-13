@@ -24,7 +24,7 @@ public class ProductService {
 
   public ProductDTO toDTO(Product p) {
     return new ProductDTO(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.isAvailable(),
-        buildCategoryPath(p.getCategory()));
+        buildCategoryPath(p.getCategory()), p.getCategory().getId());
   }
 
   private String buildCategoryPath(Category category) {
