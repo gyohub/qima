@@ -3,6 +3,13 @@ package com.gyowanny.qima.products.controller;
 import com.gyowanny.qima.products.dto.ProductDTO;
 import com.gyowanny.qima.products.entity.Product;
 import com.gyowanny.qima.products.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/products")
@@ -32,8 +33,18 @@ public class ProductController {
   }
 
   @GetMapping
-  @Operation(summary = "List all products", description = "Returns a list of products with category path")
-  public List<ProductDTO> all(@RequestParam(required = false) String name) {
+  @Operation(
+      summary = "List all products",
+      description = "Returns a list of products with optional filtering by name (case-insensitive)"
+  )
+  public List<ProductDTO> all(
+      @Parameter(
+          in = ParameterIn.QUERY,
+          description = "Optional name filter (partial match)",
+          example = "MacBook"
+      )
+      @RequestParam(required = false) String name
+  ) {
     if (name != null && !name.isBlank()) {
       return service.findByName(name);
     }

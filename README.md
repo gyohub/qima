@@ -51,6 +51,24 @@ It includes:
 - Protected routes for managing products
 - Logout from Ant Design sidebar
 
+## 📷 Screenhots
+
+### Login
+![login.png](docs/login.png)
+
+### Products
+![products.png](docs/products.png)
+
+![add_product.png](docs/add_product.png)
+
+![edit_product.png](docs/edit_product.png)
+
+![delete_product.png](docs/delete_product.png)
+
+### Categories
+
+![categories.png](docs/categories.png)
+
 
 ## 📦 Project Structure
 
@@ -107,3 +125,8 @@ Password: admin
 - MySQL container is seeded via init.sql
 - Product and category tables support hierarchy and validation
 - Use DBeaver or TablePlus to connect to MySQL on localhost:3306 with:
+```
+Username: qima
+Password: qima123
+Database: qima_db
+```
