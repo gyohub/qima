@@ -27,6 +27,7 @@ const Products: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<ProductDTO | null>(null);
   const [form] = Form.useForm();
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
+  const [searchName, setSearchName] = useState('');
 
   useEffect(() => {
     axios.get<CategoryDTO[]>('/api/categories').then((res) => {
@@ -148,13 +149,52 @@ const handleDelete = async (id: number) => {
   }
   ];
 
+const handleSearch = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.get<ProductDTO[]>('/api/products', {
+      params: { name: searchName },
+    });
+    setProducts(response.data);
+  } catch (err) {
+    message.error('Failed to search');
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <>
     <div>
       <h2>Products</h2>
-      <Button type="primary" onClick={() => { setEditingProduct(null); setModalVisible(true); }}>
-        Add Product
-      </Button>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Input
+            placeholder="Search by name"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            style={{ width: 200 }}
+            allowClear
+          />
+          <Button type="primary" onClick={handleSearch}>
+            Search
+          </Button>
+          <Button onClick={() => { setSearchName(''); fetchProducts(); }}>
+            Reset
+          </Button>
+        </div>
+
+        <Button
+          type="primary"
+          style={{ marginLeft: 'auto' }}
+          onClick={() => {
+            setEditingProduct(null);
+            setModalVisible(true);
+          }}
+        >
+          Add Product
+        </Button>
+      </div>
       {Array.isArray(products) && products.length > 0 ? (
         <Table
           rowKey="id"

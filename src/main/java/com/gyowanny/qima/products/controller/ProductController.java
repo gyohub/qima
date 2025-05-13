@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +33,10 @@ public class ProductController {
 
   @GetMapping
   @Operation(summary = "List all products", description = "Returns a list of products with category path")
-  public List<ProductDTO> all() {
+  public List<ProductDTO> all(@RequestParam(required = false) String name) {
+    if (name != null && !name.isBlank()) {
+      return service.findByName(name);
+    }
     return service.findAll();
   }
 
@@ -59,4 +63,6 @@ public class ProductController {
   public void delete(@PathVariable Long id) {
     service.delete(id);
   }
+
+
 }

@@ -27,6 +27,13 @@ public class ProductService {
         buildCategoryPath(p.getCategory()), p.getCategory().getId());
   }
 
+  public List<ProductDTO> findByName(String name) {
+    return productRepository.findByNameContainingIgnoreCase(name)
+        .stream()
+        .map(this::toDTO)
+        .toList();
+  }
+
   private String buildCategoryPath(Category category) {
     List<String> path = new ArrayList<>();
     while (category != null) {
