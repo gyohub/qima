@@ -1,5 +1,5 @@
 # QIMAtech Fullstack Product Management App
-#### Author: Gyowanny Pessatto Queiroz `gyowanny@gmail.com`
+#### Candidate: Gyowanny Pessatto Queiroz `gyowanny@gmail.com`
 
 ---
 
@@ -63,6 +63,12 @@ src/
 docker/
 ├── mysql/                                  # MySQL Docker config + seed data
 ```
+
+### Accessing Swagger UI 
+
+> It requires login
+
+http://localhost:8080/swagger-ui/index.html
 
 ---
 
