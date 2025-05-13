@@ -16,10 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-  // Disable login
-  //    http
-//        .csrf(csrf -> csrf.disable())
-//        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
 
   @Autowired
   private CustomUserDetailsService customUserDetailsService;
@@ -28,6 +25,10 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    // Use this code if you want to disable the login
+    //    http
+    //        .csrf(csrf -> csrf.disable())
+    //        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth

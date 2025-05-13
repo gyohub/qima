@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @Getter
 public class UserDetailsDTO implements UserDetails {
+
   private User user;
 
   @Override
