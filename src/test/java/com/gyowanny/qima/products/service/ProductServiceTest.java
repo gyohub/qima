@@ -1,28 +1,33 @@
 package com.gyowanny.qima.products.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.gyowanny.qima.products.dto.ProductDTO;
 import com.gyowanny.qima.products.entity.Category;
 import com.gyowanny.qima.products.entity.Product;
+import com.gyowanny.qima.products.repository.CategoryRepository;
 import com.gyowanny.qima.products.repository.ProductRepository;
+import com.gyowanny.qima.products.validator.impl.ProductDTOValidator;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ProductServiceTest {
 
   private ProductRepository productRepository;
+  private CategoryRepository categoryRepository;
+  private ProductDTOValidator productDtoValidator;
   private ProductService productService;
 
   @BeforeEach
   void setup() {
     productRepository = mock(ProductRepository.class);
-    productService = new ProductService(productRepository);
+    categoryRepository = mock(CategoryRepository.class);
+    productDtoValidator = mock(ProductDTOValidator.class);
+    productService = new ProductService(categoryRepository, productRepository, productDtoValidator);
   }
 
   @Test
@@ -44,8 +49,7 @@ class ProductServiceTest {
   @Test
   void shouldFilterProductsByName() {
     Category cat = new Category(1L, "Phones", null);
-    Product match = new Product(3L, "Samsung Galaxy", "Android phone", new BigDecimal("599.99"),
-        true, cat);
+    Product match = new Product(3L, "Samsung Galaxy", "Android phone", new BigDecimal("599.99"), true, cat);
 
     when(productRepository.findByNameContainingIgnoreCase("samsung")).thenReturn(List.of(match));
 
@@ -56,24 +60,25 @@ class ProductServiceTest {
   }
 
   @Test
-  void shouldSaveProduct() {
-    Product input = new Product(null, "Tablet", "Android tablet", new BigDecimal("299.99"), true,
-        new Category(5L, "Tablets", null));
-    Product saved = new Product(9L, "Tablet", "Android tablet", new BigDecimal("299.99"), true,
-        input.getCategory());
+  void shouldSaveProductFromDTO() {
+    Category category = new Category(5L, "Tablets", null);
+    ProductDTO dto = new ProductDTO(null, "Tablet", "Android tablet", new BigDecimal("299.99"), true, null, 5L);
 
-    when(productRepository.save(input)).thenReturn(saved);
+    Product savedEntity = new Product(9L, "Tablet", "Android tablet", new BigDecimal("299.99"), true, category);
 
-    Product result = productService.save(input);
+    when(categoryRepository.findById(5L)).thenReturn(Optional.of(category));
+    when(productRepository.save(any(Product.class))).thenReturn(savedEntity);
 
-    assertThat(result.getId()).isEqualTo(9L);
-    verify(productRepository).save(input);
+    ProductDTO result = productService.save(dto);
+
+    verify(productDtoValidator).validate(dto);
+    verify(productRepository).save(any(Product.class));
+    assertThat(result.id()).isEqualTo(9L);
   }
 
   @Test
   void shouldDeleteById() {
     productService.delete(42L);
-
     verify(productRepository).deleteById(42L);
   }
 

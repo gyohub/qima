@@ -1,7 +1,6 @@
 package com.gyowanny.qima.products.controller;
 
 import com.gyowanny.qima.products.dto.ProductDTO;
-import com.gyowanny.qima.products.entity.Product;
 import com.gyowanny.qima.products.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,18 +53,19 @@ public class ProductController {
   @PostMapping
   @Operation(summary = "Create a product", description = "Creates a new product and returns the saved entity")
   @ApiResponse(responseCode = "200", description = "Product created",
-      content = @Content(schema = @Schema(implementation = Product.class)))
-  public Product create(@RequestBody Product product) {
-    return service.save(product);
+      content = @Content(schema = @Schema(implementation = ProductDTO.class)))
+  public ProductDTO create(@RequestBody ProductDTO dto) {
+    return service.save(dto);
   }
 
   @PutMapping("/{id}")
   @Operation(summary = "Update a product", description = "Updates an existing product by ID")
   @ApiResponse(responseCode = "200", description = "Product updated",
-      content = @Content(schema = @Schema(implementation = Product.class)))
-  public Product update(@PathVariable Long id, @RequestBody Product product) {
-    product.setId(id);
-    return service.save(product);
+      content = @Content(schema = @Schema(implementation = ProductDTO.class)))
+  public ProductDTO update(@PathVariable Long id, @RequestBody ProductDTO dto) {
+    return service.save(
+        new ProductDTO(id, dto.name(), dto.description(), dto.price(), dto.available(),
+            dto.categoryPath(), dto.categoryId()));
   }
 
   @DeleteMapping("/{id}")
@@ -74,6 +74,4 @@ public class ProductController {
   public void delete(@PathVariable Long id) {
     service.delete(id);
   }
-
-
 }

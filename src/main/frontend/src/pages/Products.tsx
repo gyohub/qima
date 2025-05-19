@@ -54,14 +54,12 @@ const Products: React.FC = () => {
 
 const handleFormSubmit = async (values: ProductDTO) => {
   try {
-    const payload = {
+    const payload: ProductDTO = {
       ...values,
-      category: { id: values.categoryId },
+      id: editingProduct?.id,
     };
-    delete (payload as any).categoryId;
 
     if (editingProduct?.id) {
-      payload.id = editingProduct.id;
       await axios.put(`/api/products/${editingProduct.id}`, payload);
     } else {
       await axios.post('/api/products', payload);
@@ -69,9 +67,30 @@ const handleFormSubmit = async (values: ProductDTO) => {
 
     message.success('Saved!');
     setModalVisible(false);
+    form.resetFields();
     fetchProducts();
-  } catch (err) {
-    message.error('Failed to save product');
+  } catch (err: any) {
+    if (err.response?.status === 400 && Array.isArray(err.response.data?.errors)) {
+      const errorList = err.response.data.errors as string[];
+
+      form.setFields(
+        errorList.map((error) => {
+          // attempt to match field names from backend messages
+          const lower = error.toLowerCase();
+          let field = 'name';
+          if (lower.includes('price')) field = 'price';
+          else if (lower.includes('category')) field = 'categoryId';
+          else if (lower.includes('description')) field = 'description';
+
+          return {
+            name: field,
+            errors: [error],
+          };
+        })
+      );
+    } else {
+      message.error('Failed to save product');
+    }
   }
 };
 
@@ -216,22 +235,24 @@ const handleSearch = async () => {
       onOk={() => form.submit()}
     >
       <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-        <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+        <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
           <Input />
         </Form.Item>
         <Form.Item name="description" label="Description">
           <Input />
         </Form.Item>
-        <Form.Item name="price" label="Price" rules={[{ required: true }]}>
+        <Form.Item name="price" label="Price" rules={[{ required: true, message: 'Price is required' }]}>
           <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item name="available" label="Available" valuePropName="checked">
           <Switch />
         </Form.Item>
-        <Form.Item name="categoryId" label="Category" rules={[{ required: true }]}>
+        <Form.Item name="categoryId" label="Category" rules={[{ required: true, message: 'Category is required' }]}>
           <Select>
-            {categories.map(cat => (
-              <Option key={cat.id} value={cat.id}>{cat.name}</Option>
+            {categories.map((cat) => (
+              <Option key={cat.id} value={cat.id}>
+                {cat.name}
+              </Option>
             ))}
           </Select>
         </Form.Item>

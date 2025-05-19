@@ -12,8 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gyowanny.qima.products.entity.Category;
-import com.gyowanny.qima.products.entity.Product;
+import com.gyowanny.qima.products.dto.ProductDTO;
 import com.gyowanny.qima.products.service.ProductService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,7 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ProductController.class)
-@AutoConfigureMockMvc(addFilters = false) // disable Spring Security for test
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ProductControllerTest.Config.class)
 class ProductControllerTest {
 
@@ -44,17 +43,12 @@ class ProductControllerTest {
 
   @Test
   void shouldReturnAllProducts() throws Exception {
-    Product product1 = new Product(1L, "MacBook Pro", "Apple laptop", new BigDecimal("1999.99"),
-        true, null);
-    Product product2 = new Product(2L, "iPhone", "Latest iPhone", new BigDecimal("999.99"), true,
-        null);
+    ProductDTO dto1 = new ProductDTO(1L, "MacBook Pro", "Apple laptop",
+        new BigDecimal("1999.99"), true, "Electronics > Laptops", 2L);
+    ProductDTO dto2 = new ProductDTO(2L, "iPhone", "Latest iPhone",
+        new BigDecimal("999.99"), true, "Electronics > Phones", 3L);
 
-    given(productService.findAll()).willReturn(List.of(
-        new com.gyowanny.qima.products.dto.ProductDTO(1L, "MacBook Pro", "Apple laptop",
-            new BigDecimal("1999.99"), true, "Electronics > Laptops", 2L),
-        new com.gyowanny.qima.products.dto.ProductDTO(2L, "iPhone", "Latest iPhone",
-            new BigDecimal("999.99"), true, "Electronics > Phones", 3L)
-    ));
+    given(productService.findAll()).willReturn(List.of(dto1, dto2));
 
     mockMvc.perform(get("/api/products"))
         .andExpect(status().isOk())
@@ -65,16 +59,16 @@ class ProductControllerTest {
 
   @Test
   void shouldCreateProduct() throws Exception {
-    Product input = new Product(null, "New Product", "Test", new BigDecimal("123.45"), true,
-        new Category(1L, "Electronics", null));
-    Product saved = new Product(10L, "New Product", "Test", new BigDecimal("123.45"), true,
-        new Category(1L, "Electronics", null));
+    ProductDTO requestDto = new ProductDTO(null, "New Product", "Test",
+        new BigDecimal("123.45"), true, null, 1L);
+    ProductDTO savedDto = new ProductDTO(10L, "New Product", "Test",
+        new BigDecimal("123.45"), true, "Electronics", 1L);
 
-    given(productService.save(Mockito.any(Product.class))).willReturn(saved);
+    given(productService.save(Mockito.any(ProductDTO.class))).willReturn(savedDto);
 
     mockMvc.perform(post("/api/products")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(input)))
+            .content(objectMapper.writeValueAsString(requestDto)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(10)))
         .andExpect(jsonPath("$.name", is("New Product")));
@@ -82,14 +76,16 @@ class ProductControllerTest {
 
   @Test
   void shouldUpdateProduct() throws Exception {
-    Product updated = new Product(5L, "Updated", "Updated Desc", new BigDecimal("888.00"), false,
-        new Category(2L, "Phones", null));
+    ProductDTO input = new ProductDTO(null, "Updated", "Updated Desc",
+        new BigDecimal("888.00"), false, null, 2L);
+    ProductDTO result = new ProductDTO(5L, "Updated", "Updated Desc",
+        new BigDecimal("888.00"), false, "Phones", 2L);
 
-    given(productService.save(Mockito.any(Product.class))).willReturn(updated);
+    given(productService.save(Mockito.any(ProductDTO.class))).willReturn(result);
 
     mockMvc.perform(put("/api/products/5")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updated)))
+            .content(objectMapper.writeValueAsString(input)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(5)))
         .andExpect(jsonPath("$.name", is("Updated")));
@@ -105,10 +101,9 @@ class ProductControllerTest {
 
   @TestConfiguration
   static class Config {
-
     @Bean
     public ProductService productService() {
-      return org.mockito.Mockito.mock(ProductService.class);
+      return Mockito.mock(ProductService.class);
     }
   }
 }

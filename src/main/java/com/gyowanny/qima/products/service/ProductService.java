@@ -3,19 +3,28 @@ package com.gyowanny.qima.products.service;
 import com.gyowanny.qima.products.dto.ProductDTO;
 import com.gyowanny.qima.products.entity.Category;
 import com.gyowanny.qima.products.entity.Product;
+import com.gyowanny.qima.products.repository.CategoryRepository;
 import com.gyowanny.qima.products.repository.ProductRepository;
+import com.gyowanny.qima.products.validator.impl.ProductDTOValidator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProductService {
 
+  private final CategoryRepository categoryRepository;
   private final ProductRepository productRepository;
+  private final ProductDTOValidator productDtoValidator;
 
-  public ProductService(ProductRepository productRepository) {
+  @Autowired
+  public ProductService(CategoryRepository categoryRepository, ProductRepository productRepository,
+      ProductDTOValidator productDtoValidator) {
+    this.categoryRepository = categoryRepository;
     this.productRepository = productRepository;
+    this.productDtoValidator = productDtoValidator;
   }
 
   public List<ProductDTO> findAll() {
@@ -44,8 +53,25 @@ public class ProductService {
     return String.join(" > ", path);
   }
 
-  public Product save(Product p) {
-    return productRepository.save(p);
+  public ProductDTO save(ProductDTO dto) {
+    productDtoValidator.validate(dto);
+
+    Product product = new Product();
+    product.setName(dto.name());
+    product.setDescription(dto.description());
+    product.setPrice(dto.price());
+    product.setAvailable(dto.available());
+    product.setCategory(
+        categoryRepository.findById(dto.categoryId())
+            .orElseThrow(() -> new RuntimeException("Category not found"))
+    );
+
+    return toDTO(productRepository.save(product));
+  }
+
+
+  public ProductDTO save(Product p) {
+    return toDTO(productRepository.save(p));
   }
 
   public void delete(Long id) {
